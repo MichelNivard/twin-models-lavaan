@@ -1,46 +1,128 @@
 ---
-title: "Twin and Family Strutural Equation Models in R & Lavaan"
+title: "Twin Strutural Equation Models in R & Lavaan"
 author: "Michel G Nivard"
 date: "6/21/2021"
-output: 
-  pdf_document:
-    toc: true
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
     toc_depth: 4
-    number_sections: true
+    df_print: paged
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    number_sections: yes
 bibliography: references.bib
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Introduction
 
-This document describes various twin structural equation models (SEM) to estimate the nature of the relationship between family members in order to learn about the contribution of genes and the social or rearing environment to complex (behavioral) outcomes. The goal is to provide a basic understands of these models with the means to fit the models in lavaan [@rosseel2012], lavaan is an R package that allow the use to define a structural equation model in terms of regression, variances and covariances and will be familiar to users of M-Plus. The package is (IMO) more accessible to beginners then another excellent SEM R package: OpenMx [@neale2015], but the accessibility comes at the cost of less flexibility, In terms of flexibility OpenMX is truely unrivaled. Its worth pointing out that the developers behind OpenMx have an academic interest in twin models, which means scripts and support for users in those models is often especially excellent.
+## Resemblance between relatives
 
-# Lavaan
+There is a long history of questioning the nature of the resemblance between family members, specifically sibling and even more specifically twins. Reasons that are commonly put forward for these similarities are the obvious genetic similarity, similarity in socio-economic position and similarity in upbringing shared between siblings. Twin and family models leverage variation in genetic and environmental relatedness between family members to estimate the relative contributions of genetics, the environment, their interacting, their correlation and other process to the similarities between relatives.
 
-Lavaan requires the user to specify 
+Twins offer an excellent "natural experiment" where some twins are genetically identical (identical, or monozygotic twins or MZ twins or MZs) and some twins share halve their segregating DNA (fraternal, or dizygotic twins, DZ twins or DZs). Like any natural experiment, twin studies aren't true experiments, and so the estimated quantities come with various assumptions, some of which are specific to twin models, and I'll make sure to catalog the assumptions we are making along the way.
 
-# Twin Models & Family models
+If certain assumptions are satisfied the causes of resemblance between twins can be generalized to be causes on individual differences in the general population, provided the twins we sample are representative of the populations, and the population in question is homogeneous, as the relative contribution of genes, the environment their correlation and interaction arent fixed quantities or inescapable facts of life, they are but temporal phenomena that reflect the economic/political and societal status quo in the sample of population one studies.
 
-There is a long history of questioning the nature of the resemblance between family members, specifically sibling and even more specifically twins. Reasons that are commonly put forward for these similarities are the obvious genetic similarity, similarity in socio-economic position and similarity in upbringing shared between siblings. Twin and family models leverage variation in genetic and environmental relatedness between family members to estimate the relative contributions of genetics, the environment, their interacting, their correlation and other process to the similarities between relatives. Twins offer an excellent "natural experiment" where some twins are genetically identical (identical, or monozygotic twins or MZ twins or MZs) and some twins share halve their segregating DNA (fraternal, or dizygotic twins, DZ twins or DZs). Like any natural experiment it comes with various assumptions some of which are specific to twin models, and I'll make sure to catalog the assumptions we are making along the way.
+## SEM Models for twin data
+
+This document describes various twin structural equation models (SEM) to estimate the nature of the relationship between family members in order to learn about the contribution of genes and the social or rearing environment to complex (behavioral) outcomes. The goal is to provide a basic understands of these models with the means to fit the models in lavaan [@rosseel2012], lavaan is an R package that allow the use to define a structural equation model in terms of regression, variances and covariances and will be familiar to users of M-Plus. The package is (IMO) more accessible to beginners then another excellent SEM R package: OpenMx [@neale2015], but the accessibility comes at the cost of less flexibility, In terms of flexibility OpenMx is truly unrivaled. Its worth pointing out that the developers behind OpenMx have an academic interest in twin models, which means scripts and support for users in those models is often especially excellent. The best (to my knowledge) repository of twin models in OpenMx is maintained by [Hermine Maes](https://hermine-maes.squarespace.com) and there is an R package that wraps OpenMx twin models in simpler R commends called [umx](https://cran.r-project.org/web/packages/umx/index.html) [@bates2019] which is build and maintained by Tim Bates. Some models considered fundamental to our understanding of gene-environment interaction cannot (to my knowledge) be fitted in lavaan, despite these limitation there are many advantages to learning lavaan. The syntax used to specify lavaan models also features in blavaan [@merkle2018], its Bayesian cousin providing an easy entry into Bayeslian twin modeling. Similarly the package RegSEM [@jacobucci2016] and lslx [@huang2017] allows for *regularized* structural equation modeling and use lavaan, or very lavaan like, syntax and could be a point of departure for various novel and innovative twin models.
+
+All things considered it makes sense to collect and document lavaan syntax and examples for various twin models.
 
 # Quickly set up my R environment
 
-```{r set up packages}
+We will need the following packages, some may be optional some will be required for any lavaan analysis (like lavaan).
+
+```{r set up packages, message=FALSE}
 library(lavaan)
 library(MASS)
 library(tidySEM)
 library(ggplot2)
+library(knitr)
 ```
 
-# Univariate Twin model
+# Lavaan
 
+## Syntax
 
-### A Common environment
+Lavaan requires the user to specify a SEM model in terms of regression, which are directional relations between observed variables, factor loadings which are directional relations between a latent factor and an observed variable, variances and variances which are undirected relationships between variables. The model is defined in a text string within R.
 
-Lets simulate same data where the resemblance between twins is a function of equal parts (33.3%/33.3%/33.4%) additive genetic variance (A), common environmental influences(C) (can be rearing, can be societal influences can be governmental policies), and environment unique to each of the individual twins (E) (can beprivate friends, being in separate classrooms, but also measurement error).
++------------------------+----------------+-------------------------------------------------------------------+
+| Syntax                 | Description    | Meaning                                                           |
++========================+================+===================================================================+
+| `f =~ In1 + In2 + In3` | Factor loading | The factor "f" is measure by 3 indicators "In1", "In2" and "In3", |
++------------------------+----------------+-------------------------------------------------------------------+
+| `y ~ x`                | Regression     | The variable "y" is regressed on the variable "x"                 |
++------------------------+----------------+-------------------------------------------------------------------+
+| `x1 ~~ x2`             | Covariance     | the variable "x1" and "x2" covary                                 |
++------------------------+----------------+-------------------------------------------------------------------+
+| `x1 ~~ x1`             | Variance       | the variable x1 has a freely estimated variance                   |
++------------------------+----------------+-------------------------------------------------------------------+
+|                        |                |                                                                   |
++------------------------+----------------+-------------------------------------------------------------------+
+
+: Table 1: Lavaan Syntax Elements and their meaning
+
+You can use addition to add multiple elements to a regression in lavaan: `y ~ x1 + x2` and to covariance: `x1 ~~ x1 + x2 + x3`. Lavaan will map the variable names in the syntax to variable names in your dataset. Lavaan expects all the relationships in a model to be contained in a single string variable in R let me show you an example model fit to simulated data:
+
+```{r}
+
+# make the data
+f <- rnorm(100)
+i1 <- 1*f + rnorm(100)
+i2 <- 0.6*f + rnorm(100)
+i3 <- 1.4*f + rnorm(100)
+
+x <- rnorm(100)
+y <- f + x
+
+dataset <- cbind.data.frame(i1,i2,i3,x,y)
+
+# write the lavaan model:
+example.model <- "
+f1 =~ i1 + i2 + i3 
+y ~ x + f1
+x ~~ f1
+"
+```
+
+Okay, now notice how `f` does not exist in the dataframe: `dataset` (its going to be latent), lets fit the model to the data and have a look at the results.
+
+```{r}
+model.fit <- sem(model = example.model,data=dataset)
+model.fit
+```
+
+So the model ran and converged, the fit (according to the chi2) is adequate. Thats not entirely unexpected as we are fitting the true model to the data. Lets look at the estimates:
+
+```{r}
+parameterEstimates(model.fit)
+
+```
+
+As you can see the factor loading are close to their true simulated values of 1, 0.6 and 1.4 as are all of the other parameters.
+
+## Estimators
+
+Int he examples below is simulate data and have no missingness or non-normal data to deal with, in reality you will so it makes sense to discuss the various estimators you could use in lavaan.
+
+# Single trait twin model in lavaan
+
+## ACE model
+
+The "ACE" model operationalized a phenotype as a function of additive genetic variance (A), common environmental influences(C) (can be rearing, can be societal influences can be governmental policies), and environment unique to each of the individual twins (E) (can be private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences and common environmental is 1 for MZ twins while the correlation between the genetic influences is 0.5 for DZ twins.
+
+the ACE model assumes among other things:
+
+1.  The absence of non-additive genetic effects (gene gene interaction and dominance)
+2.  The absence of sibling influences or rater contrast effect
+3.  The absence of gene by environment correlation
+4.  The absence of gene by environment interaction
+5.  The environments MZ twin grow up are as similaras the environments DZ twins grow up in.
+
+Lets simulate same data where the resemblance between twins is a function of equal parts (33.3%/33.3%/33.4%)
 
 ```{r ACE}
 A <- matrix(1,2,2) # genetic correlation for MZ's = 1
@@ -91,28 +173,50 @@ C1 ~~ c(1,1)*C2"
 
 Lets look at some of the critical lines of code in the model:
 
-```A1=~ NA*P1 + c(a,a)*P1``` Here we create the latent variable A1, the phenotype P for twin 1 (P1) loads ion this variable, and in both groups (groups being MZ and DZ twins) the influence of this latent variable on the outcome is the same (contained using `c(a,a)` ). Similar code is used to defien the latent variables C1 and C2. Now the effect of genes on an outcome is assumed the same for everyone regardless of whether they are twins, or not, the resemblance between twin 1 and twin 2 difference for MZ and DZ twins. We define/fix the resemblance later in the model here: `A1 ~~ c(1,.5)*A2 `, because A1 and A2 are variance 1: `A1 ~~ 1*A1` and `A2 ~~ 1*A2` the constrained implies a correlation of 1 for the MZ twins and a correlation of 0.5 for the DZ twins.  The common environment is correlated 1 regardless of twin status: `C1 ~~ c(1,1)*C2`, while the unshared environment E is conceptualized as a residual variance of the trait P (P1 or P2 respectively): `P1~~c(e2,e2)*P1`
+`A1=~ NA*P1 + c(a,a)*P1` Here we create the latent variable A1, the phenotype P for twin 1 (P1) loads ion this variable, and in both groups (groups being MZ and DZ twins) the influence of this latent variable on the outcome is the same (contained using `c(a,a)` ). Similar code is used to defien the latent variables C1 and C2. Now the effect of genes on an outcome is assumed the same for everyone regardless of whether they are twins, or not, the resemblance between twin 1 and twin 2 difference for MZ and DZ twins. We define/fix the resemblance later in the model here: `A1 ~~ c(1,.5)*A2`, because A1 and A2 are variance 1: `A1 ~~ 1*A1` and `A2 ~~ 1*A2` the constrained implies a correlation of 1 for the MZ twins and a correlation of 0.5 for the DZ twins. The common environment is correlated 1 regardless of twin status: `C1 ~~ c(1,1)*C2`, while the unshared environment E is conceptualized as a residual variance of the trait P (P1 or P2 respectively): `P1~~c(e2,e2)*P1`
 
 We assume the latent variables A(1/2) and C(1/2) are uncorrelated, and fix their covariance to 0:
 
-```{r}
+```{r, eval=FALSE}
 A1 ~~ 0*C1 + 0*C2 
 A2 ~~ 0*C1 + 0*C2
-``` 
+```
 
 We also assume the residual variance (E) is uncorrelated to A and C, but fortunately for us this is a lavaan default. We proceed to fit the model to the simulated data:
 
 ```{r fit ACE}
 # Standard ace model:
 ace.fit<-cfa(ace.model, data = dataset,group = "zyg")
-summary(ace.fit)
+parameterEstimates(ace.fit)
 ```
 
+And finally lets have a look at the model in a path diagram with [tidySEM](https://cjvanlissa.github.io/tidySEM/articles/Plotting_graphs.html):
+
+```{r view ACE,fig.align='center'}
+
+lay <- get_layout("","","","",    "","","",
+                  "A1","","C1","",    "A2","","C2",
+                  ""  ,"P1","","",    ""  ,"P2","", rows = 3)
+
+graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
 
 
-### Non-additive genetic variance
 
-Lets simulate same data where the resemblance between twins is a function of equal parts (33.3%/33.3%/33.4%) additive genetic variance (A), non additive genetic effects (D) (can be geneXgene interactino, can be dominant inheritance where a single allele is enough to express the trait regardless of the state of the other allele), and environment unique to each of the individual twins (E) (can private friends, being in separate classrooms, but also measurement error).
+```
+
+## ADE model
+
+The "ADE" model operationalized a phenotype as a function of dditive genetic variance (A), non additive genetic effects (D) (can be geneXgene interacting, can be dominant inheritance where a single allele is enough to express the trait regardless of the state of the other allele), and environment unique to each of the individual twins (E) (can private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences is 1 and non-additive genetic influences is 1 for MZ twins while the correlation between the additive genetic influences is 0.5 for DZ twins and the correlation for the non-additive genetc infleunces is 0.25.
+
+the ACE model assumes among other things:
+
+1.  The absence of influences of the shared environment in which twins grow up on the outcome
+2.  the absence of sibling influences or rater contrast effect
+3.  The absence of gene by environment correlation
+4.  The absence of gene by environment interaction
+5.  The environments MZ twin grow up are as similar the environments DZ twins grow up in.
+
+Lets simulate same data where the resemblance between twins is a function of equal parts (33.3%/33.3%/33.4%) a
 
 ```{r ADE}
 A <- matrix(1,2,2) # genetic correlation for MZ's = 1
@@ -164,43 +268,173 @@ D1 ~~ c(1,.25)*D2"
 
 Lets look at some of the critical lines of code in the model:
 
-```A1=~ NA*P1 + c(a,a)*P1``` Here we create the latent variable A1, the phenotype P for twin 1 (P1) loads on this variable, and in both groups (groups being MZ and DZ twins) the influence of this latent variable on the outcome is the same (contained using `c(a,a)` ). Similar code is used to define the latent variables D1 and D2. Now the effect of genes on an outcome is assumed the same for everyone regardless of whether they are twins, or not, the resemblance between twin 1 and twin 2 difference for MZ and DZ twins. We define/fix the resemblance later in the model here: `A1 ~~ c(1,.5)*A2 `, because A1 and A2 are variance 1: `A1 ~~ 1*A1` and `A2 ~~ 1*A2` the constrained implies a correlation of 1 for the MZ twins and a correlation of 0.5 for the DZ twins.  The non-additive genetic effects are correlated 1 for MZ twins and .25 for DZ twins `C1 ~~ c(1,.25)*C2`, while the unshared environment E is conceptualized as a residual variance of the trait P (P1 or P2 respectively): `P1~~c(e2,e2)*P1`
+`A1=~ NA*P1 + c(a,a)*P1` Here we create the latent variable A1, the phenotype P for twin 1 (P1) loads on this variable, and in both groups (groups being MZ and DZ twins) the influence of this latent variable on the outcome is the same (contained using `c(a,a)` ). Similar code is used to define the latent variables D1 and D2. Now the effect of genes on an outcome is assumed the same for everyone regardless of whether they are twins, or not, the resemblance between twin 1 and twin 2 difference for MZ and DZ twins. We define/fix the resemblance later in the model here: `A1 ~~ c(1,.5)*A2`, because A1 and A2 are variance 1: `A1 ~~ 1*A1` and `A2 ~~ 1*A2` the constrained implies a correlation of 1 for the MZ twins and a correlation of 0.5 for the DZ twins. The non-additive genetic effects are correlated 1 for MZ twins and .25 for DZ twins `C1 ~~ c(1,.25)*C2`, while the unshared environment E is conceptualized as a residual variance of the trait P (P1 or P2 respectively): `P1~~c(e2,e2)*P1`
 
 We assume the latent variables A(1/2) and D(1/2) are uncorrelated, and fix their covariance to 0:
 
-```{r}
+```{r, eval=FALSE}
 A1 ~~ 0*D1 + 0*D2 
 A2 ~~ 0*D1 + 0*D2
-``` 
-
+```
 
 We also assume the residual variance (E) is uncorrelated to A and D, but fortunately for us this is a lavaan default.We proceed to fit the model to the simulated data:
 
 ```{r fit ADE}
 # Standard ace model:
 ade.fit<-cfa(ade.model, data = dataset,group = "zyg")
-summary(ade.fit)
+parameterEstimates(ade.fit)
 ```
 
+## Sibling interactions
 
-### Sex specific effects
+Sibling interactions, or one sibling influencing the others outcome, are an additional mechanism by which twins and siblings can become more alike, or if it concerns a negative sibling interaction become less alike. Sibling interaction cannot be distinguished from rater contrast effects where one child's trait changes to norm or view the rater (usually parent) has of the other child. If one of my children is very quite, the other might seem louder especially in contrast to the other. It is reasonable to assume that sibling interacting effects that persist across self, parental and teacher ratings (especially in the case of twins rated by different teachers) and external or formal measurements are more likely to reflect actual sibling interaction then rater contrast effects.
 
-### Binary/Ordinal data
+The "ACE" sibling interaction model (ACEx) operationalized a phenotype as a function of additive genetic variance (A), common environmental influences(C) (can be rearing, can be societal influences can be governmental policies), and environment unique to each of the individual twins (E) (can be private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences and common environmental is 1 for MZ twins while the correlation between the genetic influences is 0.5 for DZ twins in addition to these influences the sibling phenotypes are regressed on each other concurrently and the regression in each direction and across MZ and DZ twins is set to be equal.
 
-## Gene environment interaction
+The ACE sibling interaction model assumes among other things:
 
-## Gene-enviornment correlation (model requires a PRS)
+1.  The absence of non-additive genetic effects (gene gene interaction and dominance)
+2.  The absence of gene by environment correlation
+3.  The absence of gene by environment interaction
+4.  The environments MZ twin grow up are as similaras the environments DZ twins grow up in.
 
-## Sibling interactions & Rater (contrast) effects
+There is also a ADEx model which is a model one can consider when there is evidence for D in the basic twin model, it is pasted below the example for the ACEx. The variable "beta" represents the magnitude of the sib interaction, its set high (0.4) and we cranked up the simulated sample size as an ACEx is very power hungry. In practice you could consider comparing the AEx (settign C to 0) with an ACE model without sibling interaction (setting the interaction to 0) or, if you suspect negative interactions compare the the respective AEx and ADE models.
 
-# Multivariate models
+```{r ACE  with sibling interaction}
 
-## A bivariate twin model
+A <- matrix(1,2,2)
+C <- matrix(1,2,2)
+E <- diag(2)
+Adz <- matrix(c(1,.5,.5,1),2,2)
+
+#sibling interactie effect:
+beta <- .4
+
+# MZ twins
+
+MZ <- mvrnorm(4000,mu=c(0,0),Sigma = A+C+E)
+
+# regress the sibs on eachother
+MZ <- t(matrix(c(1,beta,beta,1),2,2) %*% t(MZ))
+
+# MZ data frame mwithcolumns zygositiy ("MZ"), twin1 data, twin2 data
+MZ <- cbind.data.frame("MZ",MZ)
+colnames(MZ) <- c("zyg","P1", "P2") 
+
+
+# DZ twins
+DZ <- mvrnorm(6000,mu=c(0,0),Sigma = Adz+C+E)
+
+# add sib interaction
+DZ <- t(matrix(c(1,beta ,beta ,1),2,2) %*% t(DZ))
+
+DZ <- cbind.data.frame("DZ",DZ)
+
+colnames(DZ) <- c("zyg","P1", "P2")
+
+# cmbineer MZ en DZ in een dataset:
+dataset <- rbind(MZ,DZ)
+```
+
+Having generated data with a sibling interaction we can go ahead and fit the sibling interaction model below to retrieve the simulate parameters.
+
+```{r fit ACE with siblign itneraction}
+
+# Models
+
+# Sibling interaction model:
+ace.model.sib.int<-"
+A1=~ NA*P1 + c(a,a)*P1 
+A2=~ NA*P2 + c(a,a)*P2 
+C1 =~ NA*P1 + c(c,c)*P1
+C2 =~ NA*P2 + c(c,c)*P2
+# variances
+A1 ~~ 1*A1
+A2 ~~ 1*A2
+C1 ~~ 1*C1
+C2 ~~ 1*C2 
+P1~~c(e2,e2)*P1 
+P2~~c(e2,e2)*P2
+# covariances
+A1 ~~ c(1,.5)*A2 
+A1 ~~ 0*C1 + 0*C2 
+A2 ~~ 0*C1 + 0*C2 
+C1 ~~ c(1,1)*C2
+
+# regs
+P1 ~ c(beta,beta)*P2
+P2 ~ c(beta,beta)*P1
+"
+
+# Sibling interaction:
+ace.fitsib <-cfa(ace.model.sib.int, data = dataset,group = "zyg")
+parameterEstimates(ace.fitsib)
+```
+
+Lets proceed to visualize the path diagram
+
+```{r}
+lay <- get_layout("A1","","C1","",    "A2","","C2",
+                  ""  ,"P1","","",    ""  ,"P2","", rows = 2)
+
+graph_sem(model = ace.fitsib,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
+
+```
+
+And for completeness here is the ADE sibling interaction model:
+
+```{r ADE sib interaction model}
+# Sibling interaction model:
+ade.model.sib.int<-"
+A1=~ NA*P1 + c(a,a)*P1 
+A2=~ NA*P2 + c(a,a)*P2 
+D1 =~ NA*P1 + c(c,c)*P1
+D2 =~ NA*P2 + c(c,c)*P2
+# variances
+A1 ~~ 1*A1
+A2 ~~ 1*A2
+D1 ~~ 1*D1
+D2 ~~ 1*D2 
+P1~~c(e2,e2)*P1 
+P2~~c(e2,e2)*P2
+# covariances
+A1 ~~ c(1,.5)*A2 
+A1 ~~ 0*D1 + 0*D2 
+A2 ~~ 0*D1 + 0*D2 
+D1 ~~ c(1,.25)*D2
+
+# regs
+P1 ~ c(beta,beta)*P2
+P2 ~ c(beta,beta)*P1
+"
+
+
+```
+
+## Gene-environment interaction
+
+The most intuitive models for gene-environment interaction with a continuous environment[@Purcell2002] cannot be fitted in lavaan, please consider OpenMx or Mplus.
+
+## Gene-environment correlation
+
+## Sex specific effects
+
+## Binary/Ordinal data
+
+## Rater bias models
+
+# Multitrait twin models in lavaan
+
+## Cholesky decomposition
 
 ## Direction of Causation models
 
-### Variatiomns on Direction of Causation models
+# Longitudinal twin models
 
-## Rater bias models
+## Auto regressive models
+
+### Phenotype to environment effects
+
+## Growth curve models
 
 # References
