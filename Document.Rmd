@@ -19,21 +19,21 @@ bibliography: references.bib
 
 ## Resemblance between relatives
 
-There is a long history of questioning the nature of the resemblance between family members, specifically sibling and even more specifically twins. Reasons that are commonly put forward for these similarities are the obvious genetic similarity, similarity in socio-economic position and similarity in upbringing shared between siblings. Twin and family models leverage variation in genetic and environmental relatedness between family members to estimate the relative contributions of genetics, the environment, their interacting, their correlation and other process to the similarities between relatives.
+There is a long history of questioning the nature of the resemblance between family members, specifically sibling and even more specifically twins. Reasons that are commonly put forward for these similarities are the obvious genetic similarity, similarity in socio-economic position, the childhood environment and similarity in upbringing shared between siblings. Twin and family models leverage known variation in genetic and environmental relatedness between family members to estimate the relative contributions of genetics, the environment, their interacting, their correlation and other process to the similarities between relatives.
 
-Twins offer an excellent "natural experiment" where some twins are genetically identical (identical, or monozygotic twins or MZ twins or MZs) and some twins share halve their segregating DNA (fraternal, or dizygotic twins, DZ twins or DZs). Like any natural experiment, twin studies aren't true experiments, and so the estimated quantities come with various assumptions, some of which are specific to twin models, and I'll make sure to catalog the assumptions we are making along the way.
+Twins offer an excellent "natural experiment" where some twins are genetically identical (identical, monozygotic twins,MZ twins, or MZs) and some twins share half their segregating DNA (fraternal, dizygotic twins, DZ twins, or DZs). Like any natural experiment, twin studies aren't true experiments, and so the estimated quantities come with various assumptions some of which are specific to twin models, and I'll make sure to catalog the assumptions we are making along the way.
 
-If certain assumptions are satisfied the causes of resemblance between twins can be generalized to be causes on individual differences in the general population, provided the twins we sample are representative of the populations, and the population in question is homogeneous, as the relative contribution of genes, the environment their correlation and interaction arent fixed quantities or inescapable facts of life, they are but temporal phenomena that reflect the economic/political and societal status quo in the sample of population one studies.
+If certain assumptions are satisfied the causes of resemblance between twins can be generalized to be causes on individual differences in the general population, provided the twins we sample are representative of the population, and the population in question is homogeneous, as the relative contribution of genes, the environment their correlation and interaction aren't fixed quantities or inescapable facts of life. Estimates of variation attributable to genes, the environment we grow up on, their interaction or correlation estimates are temporal phenomena that reflect the economic/political and societal status quo in the population one studies, or if the sample is somehow not full representative are merely features of the sample. If we respect these limitations, and re-evaluate them fully in every project, but also in every paper we read, we stand to learn a great deal about the causes of individual differences.
 
 ## SEM Models for twin data
 
 This document describes various twin structural equation models (SEM) to estimate the nature of the relationship between family members in order to learn about the contribution of genes and the social or rearing environment to complex (behavioral) outcomes. The goal is to provide a basic understands of these models with the means to fit the models in lavaan [@rosseel2012], lavaan is an R package that allow the use to define a structural equation model in terms of regression, variances and covariances and will be familiar to users of M-Plus. The package is (IMO) more accessible to beginners then another excellent SEM R package: OpenMx [@neale2015], but the accessibility comes at the cost of less flexibility, In terms of flexibility OpenMx is truly unrivaled. Its worth pointing out that the developers behind OpenMx have an academic interest in twin models, which means scripts and support for users in those models is often especially excellent. The best (to my knowledge) repository of twin models in OpenMx is maintained by [Hermine Maes](https://hermine-maes.squarespace.com) and there is an R package that wraps OpenMx twin models in simpler R commends called [umx](https://cran.r-project.org/web/packages/umx/index.html) [@bates2019] which is build and maintained by Tim Bates. Some models considered fundamental to our understanding of gene-environment interaction cannot (to my knowledge) be fitted in lavaan, despite these limitation there are many advantages to learning lavaan. The syntax used to specify lavaan models also features in blavaan [@merkle2018], its Bayesian cousin providing an easy entry into Bayeslian twin modeling. Similarly the package RegSEM [@jacobucci2016] and lslx [@huang2017] allows for *regularized* structural equation modeling and use lavaan, or very lavaan like, syntax and could be a point of departure for various novel and innovative twin models.
 
-All things considered it makes sense to collect and document lavaan syntax and examples for various twin models.
+All things considered it makes sense to study, collect and document lavaan syntax for various twin models.
 
 # Quickly set up my R environment
 
-We will need the following packages, some may be optional some will be required for any lavaan analysis (like lavaan).
+We will need the following packages, some may be optional, some will be required for any lavaan analysis (like lavaan).
 
 ```{r set up packages, message=FALSE}
 library(lavaan)
@@ -49,21 +49,21 @@ library(knitr)
 
 Lavaan requires the user to specify a SEM model in terms of regression, which are directional relations between observed variables, factor loadings which are directional relations between a latent factor and an observed variable, variances and variances which are undirected relationships between variables. The model is defined in a text string within R.
 
-+------------------------+----------------+-------------------------------------------------------------------+
-| Syntax                 | Description    | Meaning                                                           |
-+========================+================+===================================================================+
-| `f =~ In1 + In2 + In3` | Factor loading | The factor "f" is measure by 3 indicators "In1", "In2" and "In3", |
-+------------------------+----------------+-------------------------------------------------------------------+
-| `y ~ x`                | Regression     | The variable "y" is regressed on the variable "x"                 |
-+------------------------+----------------+-------------------------------------------------------------------+
-| `x1 ~~ x2`             | Covariance     | the variable "x1" and "x2" covary                                 |
-+------------------------+----------------+-------------------------------------------------------------------+
-| `x1 ~~ x1`             | Variance       | the variable x1 has a freely estimated variance                   |
-+------------------------+----------------+-------------------------------------------------------------------+
-|                        |                |                                                                   |
-+------------------------+----------------+-------------------------------------------------------------------+
++------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Syntax                 | Description     | Meaning                                                                                                                                                     |
++========================+=================+=============================================================================================================================================================+
+| `f =~ In1 + In2 + In3` | Factor loading  | The factor "f" is measure by 3 indicators "In1", "In2" and "In3",                                                                                           |
++------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `y ~ x`                | Regression      | The variable "y" is regressed on the variable "x"                                                                                                           |
++------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `x1 ~~ x2`             | Covariance      | the variable "x1" and "x2" covary                                                                                                                           |
++------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `x1 ~~ x1`             | Variance        | the variable x1 has a freely estimated variance                                                                                                             |
++------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `y | 0*t1`             | Threshold       | In binary or ordinal variable this fixes the point in the underling latent variable where the ordinal variable goes from 0 to1 (t1) or 1 to 2 (t2) etc etc. |
++------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-: Table 1: Lavaan Syntax Elements and their meaning
+: Table 1: Lavaan syntax elements and their meaning
 
 You can use addition to add multiple elements to a regression in lavaan: `y ~ x1 + x2` and to covariance: `x1 ~~ x1 + x2 + x3`. Lavaan will map the variable names in the syntax to variable names in your dataset. Lavaan expects all the relationships in a model to be contained in a single string variable in R let me show you an example model fit to simulated data:
 
@@ -98,7 +98,7 @@ model.fit
 So the model ran and converged, the fit (according to the chi2) is adequate. Thats not entirely unexpected as we are fitting the true model to the data. Lets look at the estimates:
 
 ```{r}
-parameterEstimates(model.fit)
+summary(model.fit)
 
 ```
 
@@ -106,23 +106,27 @@ As you can see the factor loading are close to their true simulated values of 1,
 
 ## Estimators
 
-Int he examples below is simulate data and have no missingness or non-normal data to deal with, in reality you will so it makes sense to discuss the various estimators you could use in lavaan.
+In the examples below I simulate data that have no missingness and are multivariate normal, or in places ordered, in reality data will not be so neat and estimates exist to accommodate. So it makes sense to discuss the various estimators you could use in lavaan.
+
+The standard estimator is maximum likelihood (defined with the argument: `estimator="ML"`) and the standard behavior with respect to missings data is listwise deletion. You can toggle full information maximum likelihood (FIML) or list wise likelihood estimation which deals better with missing data by using the argument: `missing = "ML"`. FIML is NOT supported for ordinal and categorical data analysis. Categorical and ordinal data models by default use an adjusted weighted least squares estimator `estimator="WLSMV"` .
+
+There are various alternative robust estimators (robust as in they provide standard errors that are robust against various violations of statistical assumptions) available see [this lavaan tutorial page](https://lavaan.ugent.be/tutorial/est.html) for more info.
 
 # Single trait twin model in lavaan
 
 ## ACE model
 
-The "ACE" model operationalized a phenotype as a function of additive genetic variance (A), common environmental influences(C) (can be rearing, can be societal influences can be governmental policies), and environment unique to each of the individual twins (E) (can be private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences and common environmental is 1 for MZ twins while the correlation between the genetic influences is 0.5 for DZ twins.
+The "ACE" model operationalized a phenotype as a function of additive genetic variance (A), common environmental influences (C) (can be rearing, can be societal influences can be governmental policies), and environment unique to each of the individual twins (E) (can be private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences and common environmental is 1 for MZ twins while the correlation between the genetic influences is 0.5 for DZ twins.
 
 the ACE model assumes among other things:
 
-1.  The absence of non-additive genetic effects (gene gene interaction and dominance)
-2.  The absence of sibling influences or rater contrast effect
-3.  The absence of gene by environment correlation
+1.  The absence of non-additive genetic effects (gene x gene interaction and dominance)
+2.  The absence of sibling on sibling influences or rater contrast effect
+3.  The absence of gene by environment correlation (picking your own environment or others picking your environment based on your skills for example)
 4.  The absence of gene by environment interaction
-5.  The environments MZ twin grow up are as similaras the environments DZ twins grow up in.
+5.  The environments MZ twin grow up are as similar as the environments DZ twins grow up in.
 
-Lets simulate same data where the resemblance between twins is a function of equal parts (33.3%/33.3%/33.4%)
+Lets simulate same data where the resemblance between twins is a function of equal parts (33.3%/33.3%/33.4%) A, C and E.
 
 ```{r ACE}
 A <- matrix(1,2,2) # genetic correlation for MZ's = 1
@@ -187,7 +191,7 @@ We also assume the residual variance (E) is uncorrelated to A and C, but fortuna
 ```{r fit ACE}
 # Standard ace model:
 ace.fit<-cfa(ace.model, data = dataset,group = "zyg")
-parameterEstimates(ace.fit)
+summary(ace.fit)
 ```
 
 And finally lets have a look at the model in a path diagram with [tidySEM](https://cjvanlissa.github.io/tidySEM/articles/Plotting_graphs.html):
@@ -206,7 +210,7 @@ graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_heigh
 
 ## ADE model
 
-The "ADE" model operationalized a phenotype as a function of dditive genetic variance (A), non additive genetic effects (D) (can be geneXgene interacting, can be dominant inheritance where a single allele is enough to express the trait regardless of the state of the other allele), and environment unique to each of the individual twins (E) (can private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences is 1 and non-additive genetic influences is 1 for MZ twins while the correlation between the additive genetic influences is 0.5 for DZ twins and the correlation for the non-additive genetc infleunces is 0.25.
+The "ADE" model operationalized a phenotype as a function of additive genetic variance (A), non additive genetic effects (D) (can be geneXgene interaction or can be dominant inheritance where a single allele is enough to express the trait regardless of the state of the other allele), and environment unique to each of the individual twins (E) (can private friends, being in separate classrooms, but also measurement error). The correlation between the genetic influences is 1 and non-additive genetic influences is 1 for MZ twins while the correlation between the additive genetic influences is 0.5 for DZ twins and the correlation for the non-additive genetic influences is 0.25.
 
 the ACE model assumes among other things:
 
@@ -282,7 +286,7 @@ We also assume the residual variance (E) is uncorrelated to A and D, but fortuna
 ```{r fit ADE}
 # Standard ace model:
 ade.fit<-cfa(ade.model, data = dataset,group = "zyg")
-parameterEstimates(ade.fit)
+summary(ade.fit)
 ```
 
 ## Sibling interactions
@@ -296,7 +300,7 @@ The ACE sibling interaction model assumes among other things:
 1.  The absence of non-additive genetic effects (gene gene interaction and dominance)
 2.  The absence of gene by environment correlation
 3.  The absence of gene by environment interaction
-4.  The environments MZ twin grow up are as similaras the environments DZ twins grow up in.
+4.  The environments MZ twin grow up are as similar as the environments DZ twins grow up in.
 
 There is also a ADEx model which is a model one can consider when there is evidence for D in the basic twin model, it is pasted below the example for the ACEx. The variable "beta" represents the magnitude of the sib interaction, its set high (0.4) and we cranked up the simulated sample size as an ACEx is very power hungry. In practice you could consider comparing the AEx (settign C to 0) with an ACE model without sibling interaction (setting the interaction to 0) or, if you suspect negative interactions compare the the respective AEx and ADE models.
 
@@ -368,7 +372,7 @@ P2 ~ c(beta,beta)*P1
 
 # Sibling interaction:
 ace.fitsib <-cfa(ace.model.sib.int, data = dataset,group = "zyg")
-parameterEstimates(ace.fitsib)
+summary(ace.fitsib)
 ```
 
 Lets proceed to visualize the path diagram
@@ -411,15 +415,229 @@ P2 ~ c(beta,beta)*P1
 
 ```
 
-## Gene-environment interaction
+## Binary/Ordinal data
 
-The most intuitive models for gene-environment interaction with a continuous environment[@Purcell2002] cannot be fitted in lavaan, please consider OpenMx or Mplus.
+In lavaan binary or ordinal data can be readfily analized by specifying the variables are ordered, Lets simulate twin data geenerate uynder and ACE model, from multivariate numral data that is then transfromed to ordered data.
 
-## Gene-environment correlation
+recall the ACE model assumes among other things:
+
+1.  The absence of non-additive genetic effects (gene gene interaction and dominance)
+2.  The absence of sibling influences or rater contrast effect
+3.  The absence of gene by environment correlation
+4.  The absence of gene by environment interaction
+5.  The environments MZ twin grow up are as similar the environments DZ twins grow up in.
+
+The binary data model assume the following:
+
+1.  A normally distributed continuous latent variable causes the observed ordinal (or binary ) variable.
+
+### Ordinal data
+
+Lets simulate same data where the resemblance between twins is a function of equal parts A,C and E (33.3%/33.3%/33.4%) and thew data is ordered in nature:
+
+```{r ACE ordered data}
+A <- matrix(1,2,2) # genetic correlation for MZ's = 1
+C <- matrix(1,2,2)
+E <- diag(2)
+Adz <- matrix(c(1,.5,.5,1),2,2) # genetic correlation for DZ's = 0.5
+
+# make 1000 pairs of MZ twins 
+MZ <- mvrnorm(1000,mu=c(0,0),Sigma = A+C+E)
+
+# Add a column to label as MZ:
+MZ<- cbind.data.frame("MZ",MZ)
+colnames(MZ) <- c("zyg","P1", "P2") 
+
+
+# make 1500 DZ twin pairs
+DZ <- mvrnorm(1500,mu=c(0,0),Sigma = Adz+C+E)
+
+# add variable too label as DZ:
+DZ <- cbind.data.frame("DZ",DZ)
+colnames(DZ) <- c("zyg","P1", "P2")
+
+# Combine MZ and DZ twins
+dataset <- rbind(MZ,DZ)
+
+# make the data ordered:
+dataset[dataset[,2] < 0 ,2] <- 0
+dataset[dataset[,2] > 0 & dataset[,2] < 1,2] <- 1
+dataset[dataset[,2] > 1  ,2] <- 2
+
+dataset[dataset[,3] < 0 ,3] <- 0
+dataset[dataset[,3] > 0 & dataset[,3] < 1  ,3] <- 1
+dataset[dataset[,3] > 1  ,3] <- 2
+```
+
+We then define the lavaan model that can express the variance in the trait P explained by latent variables A, C and E:
+
+```{r lavaan ACE ordered data}
+ace.model<-"
+A1=~ NA*P1 + c(a,a)*P1 
+A2=~ NA*P2 + c(a,a)*P2 
+C1 =~ NA*P1 + c(c,c)*P1
+C2 =~ NA*P2 + c(c,c)*P2
+# variances
+A1 ~~ 1*A1
+A2 ~~ 1*A2
+C1 ~~ 1*C1
+C2 ~~ 1*C2 
+P1~~c(e2,e2)*P1 
+P2~~c(e2,e2)*P2
+# covariances
+A1 ~~ c(1,.5)*A2 
+A1 ~~ 0*C1 + 0*C2 
+A2 ~~ 0*C1 + 0*C2 
+C1 ~~ c(1,1)*C2
+
+# first threshold fixed:
+P1 | 0*t1 + c(t,t)*t2
+P2 | 0*t1 + c(t,t)*t2
+"
+
+```
+
+Lets look at some of the critical lines of code in the model:
+
+IF we analyze ordinal data in a SEM model we model a latent (normaly distributed) variable that is the "cause" of the observed ordinal variable. This latent variable has various features, it has a mean, a variance and there ar thresholds, which are the values of the latent continuous variable at which the observed variable increases from 0 to 1 (threshold 1) from 1 to 2 (threshold 1) and further if we have more ordered categories.
+
+To identify a model with ordinal variables, we have to chose to either estimate the thresholds, or the mean and variance. From a twin modeling perspective, it makes more sense to estimate the variance, as we wish to partition the variance, therefore the code below fixes the first thresholds in the data to 0, we have no need or wish to estimate the means off the latent variables (assumed 0) so we need only fix 1 threshold.:
+
+```{r, eval=FALSE}
+# first thresholds fixed:
+P1 | 0*t1 + c(t,t)*t2
+P2 | 0*t1 + c(t,t)*t2
+```
+
+Then we can proceed to fit the model, note we add the following arguments to the `cfa()` function to let lavaan know the data is ordered, and we wish to use a specific "parameterization" the details of which are beyond the scope of the current document, but it is essential to specify this argument `cfa( ... ,parameterization="theta",ordered=TRUE)`.
+
+```{r fit ACE ordered data}
+# Standard ace model:
+ace.fit<-cfa(ace.model, data = dataset,group = "zyg",parameterization="theta",ordered=TRUE)
+summary(ace.fit)
+```
+
+And finally lets have a look at the model in a path diagram with [tidySEM](https://cjvanlissa.github.io/tidySEM/articles/Plotting_graphs.html):
+
+```{r view ACE ordered data,fig.align='center'}
+
+lay <- get_layout("","","","",    "","","",
+                  "A1","","C1","",    "A2","","C2",
+                  ""  ,"P1","","",    ""  ,"P2","", rows = 3)
+
+graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
+
+
+
+```
+
+### Binary data
+
+Lets simulate same data where the resemblance between twins is a function of equal parts A,C and E (33.3%/33.3%/33.4%) and thew data is binary in nature (so case/control for example):
+
+```{r ACE binary data}
+A <- matrix(1,2,2) # genetic correlation for MZ's = 1
+C <- matrix(1,2,2)
+E <- diag(2)
+Adz <- matrix(c(1,.5,.5,1),2,2) # genetic correlation for DZ's = 0.5
+
+# make 1000 pairs of MZ twins 
+MZ <- mvrnorm(1000,mu=c(0,0),Sigma = A+C+E)
+
+# Add a column to label as MZ:
+MZ<- cbind.data.frame("MZ",MZ)
+colnames(MZ) <- c("zyg","P1", "P2") 
+
+
+# make 1500 DZ twin pairs
+DZ <- mvrnorm(1500,mu=c(0,0),Sigma = Adz+C+E)
+
+# add variable too label as DZ:
+DZ <- cbind.data.frame("DZ",DZ)
+colnames(DZ) <- c("zyg","P1", "P2")
+
+# Combine MZ and DZ twins
+dataset <- rbind(MZ,DZ)
+
+# make the data ordered:
+dataset[dataset[,2] < 1 ,2] <- 0
+dataset[dataset[,2] > 1,2] <- 1
+
+
+dataset[dataset[,3] < 1 ,3] <- 0
+dataset[dataset[,3] > 1 ,3] <- 1
+
+```
+
+We then define the lavaan model that can express the variance in the trait P explained by latent variables A, C and E:
+
+```{r lavaan ACE binary data}
+ace.model<-"
+A1=~ NA*P1 + c(a,a)*P1 
+A2=~ NA*P2 + c(a,a)*P2 
+C1 =~ NA*P1 + c(c,c)*P1
+C2 =~ NA*P2 + c(c,c)*P2
+# variances
+A1 ~~ 1*A1
+A2 ~~ 1*A2
+C1 ~~ 1*C1
+C2 ~~ 1*C2 
+P1~~c(e2,e2)*P1 
+P2~~c(e2,e2)*P2
+# covariances
+A1 ~~ c(1,.5)*A2 
+A1 ~~ 0*C1 + 0*C2 
+A2 ~~ 0*C1 + 0*C2 
+C1 ~~ c(1,1)*C2
+
+# threshold fixed:
+P1 | 1*t1 
+P2 | 1*t1 
+"
+
+```
+
+Lets look at some of the critical lines of code in the model:
+
+IF we analyze ordinal data in a SEM model we model a latent (normaly distributed) variable that is the "cause" of the observed ordinal variable. This latent variable has various features, it has a mean, a variance and there ar thresholds, which are the values of the latent continuous variable at which the observed variable increases from 0 to 1 (threshold 1) from 1 to 2 (threshold 1) and further if we have more ordered categories.
+
+To identify a model with binary outcome, we have to chose to either estimate the threshold, or the variance. From a twin modeling perspective, it makes more sense to estimate the variance, as we wish to partition the variance, therefore the code below fixes the threshold to 0:
+
+```{r, eval=FALSE}
+# thresholds fixed:
+P1 | 1*t1 
+P2 | 1*t1 
+```
+
+Then we can proceed to fit the model, note we add the following arguments to the `cfa()` function to let lavaan know the data is ordered, and we wish to use a specific "parameterization" the details of which are beyond the scope of the current document, but it is essential to specify this argument `cfa( ... ,parameterization="theta",ordered=TRUE)`.
+
+```{r fit ACE binary data}
+# Standard ace model:
+ace.fit<-cfa(ace.model, data = dataset,group = "zyg",parameterization="theta",ordered=TRUE)
+summary(ace.fit)
+```
+
+And finally lets have a look at the model in a path diagram with [tidySEM](https://cjvanlissa.github.io/tidySEM/articles/Plotting_graphs.html):
+
+```{r view ACE binary data,fig.align='center'}
+
+lay <- get_layout("","","","",    "","","",
+                  "A1","","C1","",    "A2","","C2",
+                  ""  ,"P1","","",    ""  ,"P2","", rows = 3)
+
+graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
+
+
+
+```
 
 ## Sex specific effects
 
-## Binary/Ordinal data
+## Gene-environment interaction
+
+The most intuitive models for gene-environment interaction with a continuous environment[@Purcell2002] cannot be fitted in lavaan, please consider OpenMx or Mplus. The issue is that the model requires a factor loading to be a linear function of an observed variable (moderation) and this isn't implemented in lavaan.
+
+## Gene-environment correlation
 
 ## Rater bias models
 
