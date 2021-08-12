@@ -49,19 +49,19 @@ library(knitr)
 
 Lavaan requires the user to specify a SEM model in terms of regression, which are directional relations between observed variables, factor loadings which are directional relations between a latent factor and an observed variable, variances and variances which are undirected relationships between variables. The model is defined in a text string within R.
 
-+------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Syntax                 | Description     | Meaning                                                                                                                                                     |
-+========================+=================+=============================================================================================================================================================+
-| `f =~ In1 + In2 + In3` | Factor loading  | The factor "f" is measure by 3 indicators "In1", "In2" and "In3",                                                                                           |
-+------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| `y ~ x`                | Regression      | The variable "y" is regressed on the variable "x"                                                                                                           |
-+------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| `x1 ~~ x2`             | Covariance      | the variable "x1" and "x2" covary                                                                                                                           |
-+------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| `x1 ~~ x1`             | Variance        | the variable x1 has a freely estimated variance                                                                                                             |
-+------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| `y | 0*t1`             | Threshold       | In binary or ordinal variable this fixes the point in the underling latent variable where the ordinal variable goes from 0 to1 (t1) or 1 to 2 (t2) etc etc. |
-+------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Syntax                 | Description    | Meaning                                                                                                                                                     |
++========================+================+=============================================================================================================================================================+
+| `f =~ In1 + In2 + In3` | Factor loading | The factor "f" is measure by 3 indicators "In1", "In2" and "In3",                                                                                           |
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `y ~ x`                | Regression     | The variable "y" is regressed on the variable "x"                                                                                                           |
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `x1 ~~ x2`             | Covariance     | the variable "x1" and "x2" covary                                                                                                                           |
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `x1 ~~ x1`             | Variance       | the variable x1 has a freely estimated variance                                                                                                             |
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| `y | 0*t1`             | Threshold      | In binary or ordinal variable this fixes the point in the underling latent variable where the ordinal variable goes from 0 to1 (t1) or 1 to 2 (t2) etc etc. |
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 : Table 1: Lavaan syntax elements and their meaning
 
@@ -172,7 +172,9 @@ P2~~c(e2,e2)*P2
 A1 ~~ c(1,.5)*A2 
 A1 ~~ 0*C1 + 0*C2 
 A2 ~~ 0*C1 + 0*C2 
-C1 ~~ c(1,1)*C2"
+C1 ~~ c(1,1)*C2
+"
+
 ```
 
 Lets look at some of the critical lines of code in the model:
@@ -201,8 +203,9 @@ And finally lets have a look at the model in a path diagram with [tidySEM](https
 lay <- get_layout("","","","",    "","","",
                   "A1","","C1","",    "A2","","C2",
                   ""  ,"P1","","",    ""  ,"P2","", rows = 3)
+get_edges(ace.fit)
 
-graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
+#graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
 
 
 
@@ -342,7 +345,7 @@ dataset <- rbind(MZ,DZ)
 
 Having generated data with a sibling interaction we can go ahead and fit the sibling interaction model below to retrieve the simulate parameters.
 
-```{r fit ACE with siblign itneraction}
+```{r fit ACE with sibling interaction}
 
 # Models
 
@@ -631,7 +634,125 @@ graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_heigh
 
 ```
 
-## Sex specific effects
+## Sex specific (genetic) effects
+
+Various twin models exist to quantify sex differences in the etiology of complex traits. its worth pointing out these models often aren't able to capture the role of other aspects of sex gender and identity play in traits.There are various types of sex differences we can capture in a twin model, the first of which are scalar sex differences, that is the same genes and environments influences the outcome in men and women, but their relative importance varies. First we simulate a trait where in men en women the relative importance of A, C and E differs (in women A has twice the effect in the simulation). This model is called a *quantitative* sex differences model because the contributions of A, C and E differ but the same genes and environments play a role regardless of sex (i.e. A C and E are correlated perfectly between men and women).
+
+for this model we split our data into 5 groups, male monozygotic twin (MZM) pairs, female monozygotic twin pairs (MZF), male dizygotic twin pairs (DZM), female dizygotic twin pairs (DZF) and finally dizygotic twins of opposite sex (DOS). Its important that in the DOS group either the first twin is always male or always the female twin in each pair. 
+
+Other then allowing for sex differences, this model shares all its assumptions with he basic ACE model.
+
+```{r  sex specific ACE}
+A <- matrix(1,2,2) # genetic correlation for MZ's = 1
+C <- matrix(1,2,2)
+E <- diag(2)
+Adz <- matrix(c(1,.5,.5,1),2,2) # genetic correlation for DZ's = 0.5
+
+# make 1000 pairs of MZ male (MZM) twins 
+MZM <- mvrnorm(1000,mu=c(0,0),Sigma = A+C+E)
+
+# make 1000 pairs of MZ female (MZF) twins 
+MZF <- mvrnorm(1000,mu=c(0,0),Sigma = 2*A+C+E)
+
+# Add a column to label as MZ:
+MZM<- cbind.data.frame("MZM",MZM)
+colnames(MZM) <- c("zyg","P1", "P2") 
+
+MZF<- cbind.data.frame("MZF",MZF)
+colnames(MZF) <- c("zyg","P1", "P2") 
+
+
+# make 1500 DZ twin pairs
+DZM <- mvrnorm(1000,mu=c(0,0),Sigma = Adz+C+E)
+
+
+# make 1500 DZ twin pairs
+DZF <- mvrnorm(1000,mu=c(0,0),Sigma = 2*Adz+C+E)
+
+# add variable too label as DZ:
+DZM <- cbind.data.frame("DZM",DZM)
+colnames(DZM) <- c("zyg","P1", "P2")
+
+# add variable too label as DZ:
+DZF <- cbind.data.frame("DZF",DZF)
+colnames(DZF) <- c("zyg","P1", "P2")
+
+
+# Opposite sex twins,(DOS, for Dyzygotic twins of opposite sex) males then females as order, ame sure the variances of the second twin (the female) is 2:
+
+sd <- matrix(c(1,0,0,sqrt(2)),2,2) 
+
+Ados <- sd %*% Adz %*% sd
+
+
+# make 1500 DZ twin pairs (DOS, for Dyzygotic twins of opposite sex) 
+DOS <- mvrnorm(1000,mu=c(0,0),Sigma = Ados+C+E)
+
+# add variable too label as DZ:
+DOS <- cbind.data.frame("DOS",DOS)
+colnames(DOS) <- c("zyg","P1", "P2")
+
+# Combine MZ and DZ twins
+dataset <- rbind(MZM,MZF,DZM,DZF,DOS)
+
+```
+
+We then define the lavaan model that can express the variance in the trait P explained by latent variables A, C and E:
+
+```{r lavaan sex specific ACE}
+ace.sex.specific.model<-"
+A1=~ NA*P1 + c(am,af,am,af,am)*P1 
+A2=~ NA*P2 + c(am,af,am,af,af)*P2 
+C1 =~ NA*P1 + c(cm,cf,cm,cf,cm)*P1
+C2 =~ NA*P2 + c(cm,cf,cm,cf,cf)*P2
+# variances
+A1 ~~ 1*A1
+A2 ~~ 1*A2
+C1 ~~ 1*C1
+C2 ~~ 1*C2 
+P1~~c(em2,ef2,em2,ef2,em2)*P1 
+P2~~c(em2,ef2,em2,ef2,ef2)*P2
+# covariances
+A1 ~~ c(1,1,.5,.5,.5)*A2 
+A1 ~~ 0*C1 + 0*C2 
+A2 ~~ 0*C1 + 0*C2 
+C1 ~~ c(1,1,1,1,1)*C2"
+```
+
+Lets look at some of the critical lines of code in the model, first we look at the way we specify the path loading for 5 types of twins that coreespond to the 5 groups in the SEM model:
+
+```{r, eval=FALSE}
+A1=~ NA*P1 + c(am,af,am,af,am)*P1 
+A2=~ NA*P2 + c(am,af,am,af,af)*P2 
+```
+
+Notice there are now male specific (am) and female specific (af) factor loadings. the order here needs to correspond to the order in which each zygosity first appears in the data, which may be fidly to get right. Also notcie how `A2` which is the latent factor for twin two has a different loaidng in the 5th group (DOS, for Dyzygotic twins of opposite sex) 
+
+
+
+We also assume the residual variance (E) is uncorrelated to A and C, but fortunately for us this is a lavaan default. We proceed to fit the model to the simulated data:
+
+```{r fit sex specific ACE}
+# Standard ace model:
+ace.sex.specific.fit<-cfa(ace.sex.specific.model, data = dataset,group = "zyg")
+summary(ace.sex.specific.fit)
+```
+
+And finally lets have a look at the model in a path diagram with [tidySEM](https://cjvanlissa.github.io/tidySEM/articles/Plotting_graphs.html):
+
+```{r view sex specific ACE,fig.align='center'}
+
+lay <- get_layout("","","","",    "","","",
+                  "A1","","C1","",    "A2","","C2",
+                  ""  ,"P1","","",    ""  ,"P2","", rows = 3)
+
+graph_sem(model = ace.sex.specific.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
+
+
+
+```
+
+
 
 ## Gene-environment interaction
 
