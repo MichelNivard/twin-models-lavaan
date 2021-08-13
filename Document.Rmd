@@ -3,15 +3,15 @@ title: "Twin Strutural Equation Models in R & Lavaan"
 author: "Michel G Nivard"
 date: "6/21/2021"
 output:
-  pdf_document:
-    toc: yes
-    toc_depth: 4
-    number_sections: yes
   html_document:
     toc: yes
     toc_float: yes
     toc_depth: 4
     df_print: paged
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    number_sections: yes
 bibliography: references.bib
 ---
 
@@ -174,7 +174,6 @@ A1 ~~ 0*C1 + 0*C2
 A2 ~~ 0*C1 + 0*C2 
 C1 ~~ c(1,1)*C2
 "
-
 ```
 
 Lets look at some of the critical lines of code in the model:
@@ -203,12 +202,8 @@ And finally lets have a look at the model in a path diagram with [tidySEM](https
 lay <- get_layout("","","","",    "","","",
                   "A1","","C1","",    "A2","","C2",
                   ""  ,"P1","","",    ""  ,"P2","", rows = 3)
-get_edges(ace.fit)
 
-#graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
-
-
-
+graph_sem(model = ace.fit,layout=lay,variance_diameter=.3,angle = 180,rect_height=.35,ellipses_height=.35,spacing_x=1,spacing_y=0.7)
 ```
 
 ## ADE model
