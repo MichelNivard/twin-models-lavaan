@@ -3,15 +3,15 @@ title: "Twin Strutural Equation Models in R & Lavaan"
 author: "Michel G Nivard"
 date: "6/21/2021"
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    number_sections: yes
   html_document:
     toc: yes
     toc_float: yes
     toc_depth: 4
     df_print: paged
-  pdf_document:
-    toc: yes
-    toc_depth: 4
-    number_sections: yes
 bibliography: references.bib
 ---
 
